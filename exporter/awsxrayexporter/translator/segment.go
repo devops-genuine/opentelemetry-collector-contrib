@@ -305,7 +305,11 @@ func convertToAmazonTraceID(traceID pdata.TraceID) (string, error) {
 	//
 	// In that case, we return invalid traceid error
 	if delta := epochNow - epoch; delta > maxAge || delta < -maxSkew {
-		return "", fmt.Errorf("invalid xray traceid: %s", traceID.HexString())
+		adjustedEpoch, err := getAdjustedEpoch(span)
+		if err != nil {
+			return "", fmt.Errorf("invalid xray traceid: %s", traceID.HexString())
+		}
+		epoch = adjustedEpoch
 	}
 
 	binary.BigEndian.PutUint32(b[0:4], uint32(epoch))
@@ -466,4 +470,40 @@ func fixAnnotationKey(key string) string {
 			return '_'
 		}
 	}, key)
+}
+
+// Adjusts the epoch for TraceID based on segment start time.
+// If segment start time is missing then takes current epoch.
+func getAdjustedEpoch(span pdata.Span) (int64, error) {
+	if span.IsNil() {
+		return 0, nil
+	}
+	traceID := span.TraceID()
+	start := int64(span.StartTime())
+
+	var arg string
+	if start == 0 {
+		arg = fmt.Sprintf("%x", time.Now().Unix())
+	} else {
+		arg = fmt.Sprintf("%x", (start / int64(time.Second)))
+	}
+
+	var (
+		cachedEpoch string
+		err         error
+	)
+	if TraceIDCache == nil {
+		cachedEpoch = arg
+	} else {
+		cachedEpoch, err = TraceIDCache.GetOrSet(traceID.HexString(), arg)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	adjustedEpoch, err := strconv.ParseInt(cachedEpoch, 16, 64)
+	if err != nil {
+		return 0, err
+	}
+	return adjustedEpoch, nil
 }
