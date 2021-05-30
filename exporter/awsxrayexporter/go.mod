@@ -1,4 +1,4 @@
-module github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsxrayexporter
+module github.com/devops-genuine/opentelemetry-collector-contrib/exporter/awsxrayexporter
 
 go 1.15
 
@@ -20,6 +20,6 @@ require (
 	gopkg.in/ini.v1 v1.57.0 // indirect
 )
 
-replace github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/xray => ./../../internal/aws/xray
+replace github.com/devops-genuine/opentelemetry-collector-contrib/internal/aws/xray => ./../../internal/aws/xray
 
-replace github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/awsutil => ./../../internal/aws/awsutil
+replace github.com/devops-genuine/opentelemetry-collector-contrib/internal/aws/awsutil => ./../../internal/aws/awsutil
